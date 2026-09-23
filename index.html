@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Digital Doodle</title>
+
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: white;
+        font-family: Arial, sans-serif;
+      }
+
+
+      #title {
+        position: fixed;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 18px;
+        letter-spacing: 2px;
+        z-index: 10;
+      }
+
+      /* my awesome simple reset button */
+      #resetButton {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        padding: 7px 12px;
+        background: white;
+        border: 1px solid black;
+        cursor: pointer;
+        z-index: 10;
+      }
+
+      #artwork {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .shape {
+        position: absolute;
+        background: white;
+        border: 2px solid black;
+        cursor: grab;
+        user-select: none;
+        z-index: 5;
+      }
+
+      .shape:active {
+        cursor: grabbing;
+      }
+
+      /* Squares can have different sizes because js
+   changes their width and height! */
+      .square {
+        box-sizing: border-box;
+      }
+
+      .triangle {
+        width: 0;
+        height: 0;
+        background: transparent;
+        border: none;
+        border-left: 30px solid transparent;
+        border-right: 30px solid transparent;
+        border-bottom: 50px solid black;
+      }
+
+      .connection {
+        position: absolute;
+        height: 1px;
+        background: black;
+        transform-origin: left center;
+        pointer-events: none;
+        z-index: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div id="title">DIGITAL DOODLE</div>
+
+    <button id="resetButton">RESET</button>
+
+    <div id="artwork"></div>
+
+
+    <script>
+      /*
+JAVASCRIPT
+the js i use is responsible for all of the interactive parts
+of the project:
+1. Creating the shapes.
+2. Randomizing their positions and sizes.
+3. Allowing the shapes to be dragged.
+4. Keeping the connecting lines attached.
+5. Resetting the artwork.
+*/
+
+
+      /*
+      FIND THE ARTWORK AREA
+      getElementById() finds the HTML element with the ID
+      "artwork" so javaScript can add shapes to it.
+      */
+
+      const artwork = document.getElementById("artwork");
+
+
+      /*
+      SHAPE INFORMATION
+
+      This list tells the program how many shapes to create
+      and what type each shape should be.
+
+      The "size" value is used as a starting size. The actual
+      random size is set later, also i thikn theres a way to have the javascript make the shapes 
+      differently but i couldnt figure it out for the life of me so i had to resort to long list 
+      */
+
+      const shapeTypes = [
+        "square",
+        "triangle",
+        "square",
+        "triangle",
+        "square",
+        "triangle",
+        "square",
+        "triangle",
+        "square",
+        "triangle",
+        "square",
+        "triangle"
+      ];
+
+      /*
+      CURRENT SHAPES
+      This variable will contain the shapes currently displayed
+      on the screen.
+      It changes whenever we create a new randomized arrangement.
+      We use let when we plan to reassign the variable
+
+      */
+
+      let shapes = [];
+
+      /*
+      RANDOM NUMBER FUNCTION
+      This creates a random whole number between two numbers.
+      you can set the numbers in a (min, max) pararenthesis and it will produce a random number from those  two values set! 
+      Math.random() gives us a random decimal between 0 and 1.
+      Math.floor() turns that result into a whole number.
+      */
+
+      function randomNumber (min, max) {
+
+        return Math.floor(
+          Math.random() * (max - min + 1)
+        ) + min;
+
+      }
+
+      /*
+      CREATE RANDOM SHAPES
+      This function creates a new arrangement of shapes.
+      Each shape receives:
+      type = square or triangle
+      x = random horizontal position
+      y = random vertical position
+      size = random size
+      This means the composition can change every time
+      the artwork is reset! 
+      */
+
+      function createShapes () {
+
+        shapes = [];
+
+        shapeTypes.forEach(function (type) {
+
+          /*
+          gives the shapes a margin to stay within
+          */
+
+          const x = randomNumber(100, window.innerWidth - 100);
+
+          const y = randomNumber(100, window.innerHeight - 100);
+
+
+          /*
+       this gives our shapes random possible sizes! 
+        */
+
+          const size = randomNumber(30, 90);
+
+
+          /*
+          Store the information about this shape.
+          */
+
+          shapes.push({
+            type: type,
+            x: x,
+            y: y,
+            size: size
+          });
+
+        });
+
+
+        /*
+        Once the shape information has been created,
+        turns it into visible HTML elements.
+        */
+
+        drawShapes();
+
+      }
+
+
+      /*
+      DRAW THE SHAPES
+      This takes the information stored in "shapes" and
+      creates the actual geometric objects on the page.
+      */
+
+      function drawShapes () {
+
+        /*
+        Clear the previous doodle before drawing the
+        new arrangement.
+        */
+
+        artwork.innerHTML = "";
+
+        /*
+        Go through every shape in the shapes list.
+        */
+
+        shapes.forEach(function (shape, index) {
+
+          const element = document.createElement("div");
+
+
+          /*
+          Give the element the basic "shape" class and
+          its specific type.
+          */
+
+          element.classList.add("shape");
+          element.classList.add(shape.type);
+
+
+          /*
+          Store which shape this is.
+          */
+
+          element.dataset.index = index;
+
+          /*
+          Position the shape using the randomized
+          x and y values.
+          */
+
+          element.style.left = shape.x + "px";
+          element.style.top = shape.y + "px";
+
+
+          /*
+          Squares need their size set directly because
+          each square can have a different size.
+          */
+
+          if (shape.type === "square") {
+
+            element.style.width = shape.size + "px";
+            element.style.height = shape.size + "px";
+
+          }
+
+
+          /*
+          Triangles use their border size to determine
+          their appearance.
+
+          We make the triangle larger or smaller depending
+          on the randomized size.
+          */
+
+          if (shape.type === "triangle") {
+
+            /*
+            A CSS triangle is made from three borders.
+            The randomized size changes the width and height
+            of each triangle.
+            */
+
+            const triangleSize = shape.size / 2;
+
+            element.style.borderLeftWidth =
+              triangleSize + "px";
+
+            element.style.borderRightWidth =
+              triangleSize + "px";
+
+            element.style.borderBottomWidth =
+              shape.size + "px";
+
+          }
+
+          /*
+          Add the shape to the artwork.
+          */
+
+          artwork.appendChild(element);
+
+          /*
+          Give the shape its dragging behavior.
+          */
+
+          makeDraggable(element, shape);
+
+        });
+
+
+        /*
+        Draw the lines after all shapes have been created.
+        */
+
+        createConnections();
+
+      }
+
+
+      /*
+      CREATE CONNECTIONS
+      Each shape connects to the next shape with a line
+      */
+
+      function createConnections () {
+
+        for (let i = 0; i < shapes.length - 1; i++) {
+
+          const line = document.createElement("div");
+
+          line.classList.add("connection");
+
+          artwork.appendChild(line);
+
+          positionLine(
+            line,
+            shapes[i],
+            shapes[i + 1]
+          );
+
+        }
+
+      }
+
+
+      /*
+      POSITION A CONNECTION
+      The line needs to know wheres its starting, how long it is, and what angles it can have
+      This uses basic geometry to calculate those values.
+      */
+
+      function positionLine (line, firstShape, secondShape) {
+
+        const dx = secondShape.x - firstShape.x;
+
+        const dy = secondShape.y - firstShape.y;
+
+        /*
+        Calculate the distance between the two shapes.
+        */
+
+        const distance = Math.sqrt(
+          dx * dx + dy * dy
+        );
+
+        /*
+        Calculate the angle between the two shapes.
+        */
+
+        const angle =
+          Math.atan2(dy, dx) * 180 / Math.PI;
+
+        /*
+        Put the line at the first shape.
+        */
+
+        line.style.left = firstShape.x + "px";
+        line.style.top = firstShape.y + "px";
+
+        /*
+        Make the line as long as the distance
+        between the shapes.
+        */
+
+        line.style.width = distance + "px";
+
+
+        /*
+        Rotate the line toward the second shape.
+        */
+
+        line.style.transform =
+          "rotate(" + angle + "deg)";
+      }
+
+      /*
+      DRAGGING
+      The following mouse events create the drag interaction:
+      mousedown = the user starts holding the shape.
+      mousemove = the user moves the shape.
+      mouseup = the user releases the shape.
+      */
+
+      function makeDraggable (element, shape) {
+
+        let dragging = false;
+
+        let offsetX = 0;
+        let offsetY = 0;
+
+        /*
+        The user has clicked the shape.
+        */
+
+        element.addEventListener("mousedown", function (event) {
+
+          dragging = true;
+
+          /*
+          Remember exactly where inside the shape
+          the user clicked.
+          */
+
+          offsetX = event.clientX - shape.x;
+          offsetY = event.clientY - shape.y;
+
+        });
+
+
+        /*
+        The mouse is moving.
+        If dragging is true, move the shape along
+        with the mouse.
+        */
+
+        document.addEventListener("mousemove", function (event) {
+
+          if (!dragging) {
+            return;
+          }
+
+          shape.x = event.clientX - offsetX;
+          shape.y = event.clientY - offsetY;
+
+          /*
+          Update the visual position of the shape.
+          */
+
+          element.style.left = shape.x + "px";
+          element.style.top = shape.y + "px";
+
+          /*
+          Update the lines because the shape has moved.
+          */
+
+          updateConnections();
+
+        });
+
+        /*
+        The user releases the mouse button.
+        */
+
+        document.addEventListener("mouseup", function () {
+
+          dragging = false;
+
+        });
+
+      }
+
+      /*
+
+      UPDATE CONNECTIONS
+      When a shape moves, the old lines are no longer in the
+      correct positions.
+      This removes the old lines and creates new ones.
+      */
+
+      function updateConnections () {
+
+        const oldLines =
+          artwork.querySelectorAll(".connection");
+
+
+        oldLines.forEach(function (line) {
+
+          line.remove();
+
+        });
+        createConnections();
+
+      }
+
+      /*
+      RESET BUTTON
+      Instead of returning to one exact arrangement,
+      RESET generates a new random arrangment of the shapes anytime the website updates
+      */
+
+      document.getElementById("resetButton")
+        .addEventListener("click", function () {
+
+          createShapes();
+
+        });
+
+      createShapes();
+    </script>
+  </body>
+</html>
